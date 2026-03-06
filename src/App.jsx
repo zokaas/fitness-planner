@@ -656,7 +656,7 @@ export default function App() {
               {dayEx && (
                 <div style={{ background:exMeta.bg,border:`1.5px solid ${workoutDone?"#3D7A52":"#E8E8E8"}`,borderRadius:12,padding:14,position:"relative" }}>
                   <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10 }}>
-                    <div style={{ flex:1, cursor:"pointer" }} onClick={()=>setSwap({ open:true, mode:"exercise", type:"cardio" })}>
+                    <div style={{ flex:1, cursor:"pointer" }} onClick={()=>setWorkoutPlan({ open:true })}>
                       <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:4,flexWrap:"wrap" }}>
                         <span style={{ fontSize:9,fontFamily:"sans-serif",letterSpacing:"1.5px",textTransform:"uppercase",color:exMeta.accent,fontWeight:700 }}>{exMeta.emoji} {exMeta.label}</span>
                         {dayEx.homeOk && <span style={{ fontSize:8,background:"#4A8C5C",color:"#fff",padding:"1px 5px",borderRadius:4,fontFamily:"sans-serif",fontWeight:700 }}>🏠 Home OK</span>}
