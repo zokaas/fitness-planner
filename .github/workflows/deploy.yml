@@ -1,0 +1,83 @@
+name: Deploy & Notify
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    # All times UTC. Helsinki = UTC+2 summer, UTC+3 winter.
+    - cron: '0 6 * * *'    # 08:00 Helsinki → daily meal reminder
+    - cron: '30 13 * * *'  # 15:30 Helsinki → workout reminder
+    - cron: '0 16 * * 0'   # 18:00 Helsinki Sunday → weekly summary
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+
+  # ── Job 1: Build and deploy the app (only on push to main) ─────────────────
+  build-and-deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ── Job 2: Send push notifications on schedule ─────────────────────────────
+  send-notifications:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Supabase Edge Function
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -X POST "$SUPABASE_URL/functions/v1/send-notifications" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json")
+
+          echo "Response: $(cat /tmp/response.txt)"
+          echo "Status: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -ge 400 ]; then
+            echo "Edge function call failed with status $HTTP_STATUS"
+            exit 1
+          fi
