@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase, ensureAuth } from "./supabaseClient";
 import {
+<<<<<<< HEAD
   MEAL_LIBRARY,
   EXERCISE_LIBRARY,
   DEFAULT_MEAL_PLAN,
@@ -17,6 +18,13 @@ import {
   timeLbl,
   durLbl,
 } from "./data";
+=======
+  MEAL_LIBRARY, EXERCISE_LIBRARY, DEFAULT_MEAL_PLAN, DEFAULT_EXERCISE_PLAN,
+  MEAL_META, EX_META, INTENSITY_COLOR, MEAL_TYPES, EX_TYPES,
+  WEEK_THEMES, DAY_LABELS, getMeal, getExercise, timeLbl, durLbl
+} from "./data"
+import { ShoppingList } from "./ShoppingList"
+>>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
 
 // ─── VAPID PUBLIC KEY (replace after running: npx web-push generate-vapid-keys) ──
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "";
@@ -439,8 +447,22 @@ function SwapDrawer({ open, mode, type, currentId, onSelect, onClose }) {
   );
 }
 
-// ─── WEIGHT CHART (SVG) ───────────────────────────────────────────────────────
+// ─── WEIGHT CHART (SVG) with goal line ───────────────────────────────────────
+const PLAN_START   = new Date("2025-03-03")
+const GOAL_DATE    = new Date("2025-10-01")
+const START_WEIGHT = 74
+const GOAL_WEIGHT  = 57
+const TOTAL_DAYS   = (GOAL_DATE - PLAN_START) / 86400000
+
+function targetWeightOnDate(dateStr) {
+  const d = new Date(dateStr)
+  const daysSinceStart = (d - PLAN_START) / 86400000
+  const t = Math.max(0, Math.min(1, daysSinceStart / TOTAL_DAYS))
+  return START_WEIGHT - (START_WEIGHT - GOAL_WEIGHT) * t
+}
+
 function WeightChart({ entries }) {
+<<<<<<< HEAD
   if (entries.length < 2)
     return (
       <div
@@ -505,13 +527,74 @@ function WeightChart({ entries }) {
         viewBox={`0 0 ${W} ${H}`}
         style={{ overflow: "visible" }}
       >
+=======
+  const W = 320, H = 140, PAD = { t:10, r:14, b:30, l:36 }
+
+  // Build goal line points: start → today → goal date
+  const today = new Date()
+  const goalPoints = [
+    { date: "2025-03-03", weight: START_WEIGHT },
+    { date: GOAL_DATE.toISOString().split("T")[0], weight: GOAL_WEIGHT },
+  ]
+
+  const allWeights = [
+    ...entries.map(e => e.weight_kg),
+    START_WEIGHT, GOAL_WEIGHT
+  ]
+  const minW = Math.min(...allWeights) - 1
+  const maxW = Math.max(...allWeights) + 1
+
+  // Date range: plan start → goal date
+  const startMs = PLAN_START.getTime()
+  const endMs   = GOAL_DATE.getTime()
+  const totalMs = endMs - startMs
+
+  const xByDate = dateStr => {
+    const ms = new Date(dateStr).getTime()
+    const t  = Math.max(0, Math.min(1, (ms - startMs) / totalMs))
+    return PAD.l + t * (W - PAD.l - PAD.r)
+  }
+  const yByWeight = w => PAD.t + (1 - (w - minW) / (maxW - minW)) * (H - PAD.t - PAD.b)
+
+  const goalLinePoints = goalPoints.map(p => `${xByDate(p.date)},${yByWeight(p.weight)}`).join(" ")
+
+  const todayX = xByDate(today.toISOString().split("T")[0])
+
+  const currentWeight = entries.length > 0 ? entries[entries.length - 1].weight_kg : null
+  const targetNow     = targetWeightOnDate(today.toISOString().split("T")[0])
+  const diff          = currentWeight !== null ? (currentWeight - targetNow).toFixed(1) : null
+  const aheadBehind   = diff !== null ? (parseFloat(diff) <= 0 ? `${Math.abs(diff)} kg ahead of target 🎉` : `${diff} kg behind target`) : null
+
+  return (
+    <div>
+      {/* Summary row */}
+      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8, fontFamily:"sans-serif", flexWrap:"wrap", gap:4 }}>
+        <div style={{ fontSize:11, color:"#999" }}>Start: <strong style={{ color:"#333" }}>{START_WEIGHT} kg</strong></div>
+        {diff !== null && (
+          <div style={{ fontSize:11, fontWeight:700, color:parseFloat(diff)<=0?"#3D7A52":"#C0392B", background:parseFloat(diff)<=0?"#EEF7EE":"#FEF0EE", borderRadius:6, padding:"2px 8px" }}>
+            {aheadBehind}
+          </div>
+        )}
+        <div style={{ fontSize:11, color:"#999" }}>Goal: <strong style={{ color:"#C8842A" }}>{GOAL_WEIGHT} kg</strong></div>
+      </div>
+
+      {entries.length < 1 && (
+        <div style={{ textAlign:"center", padding:"16px 0", color:"#BBB", fontFamily:"sans-serif", fontSize:12 }}>
+          Log your weight to see progress vs target
+        </div>
+      )}
+
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow:"visible" }}>
+>>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
         <defs>
           <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3D7A52" stopOpacity="0.3" />
+            <stop offset="0%" stopColor="#3D7A52" stopOpacity="0.25" />
             <stop offset="100%" stopColor="#3D7A52" stopOpacity="0" />
           </linearGradient>
         </defs>
+
         {/* Grid lines */}
+<<<<<<< HEAD
         {[0, 0.25, 0.5, 0.75, 1].map((t) => {
           const y = PAD.t + t * (H - PAD.t - PAD.b);
           const v = (max - t * (max - min)).toFixed(1);
@@ -535,9 +618,19 @@ function WeightChart({ entries }) {
               >
                 {v}
               </text>
+=======
+        {[0,.25,.5,.75,1].map(t => {
+          const y = PAD.t + t*(H-PAD.t-PAD.b)
+          const v = (maxW - t*(maxW-minW)).toFixed(0)
+          return (
+            <g key={t}>
+              <line x1={PAD.l} y1={y} x2={W-PAD.r} y2={y} stroke="#EBEBEB" strokeWidth={1} />
+              <text x={PAD.l-4} y={y+4} textAnchor="end" fontSize={8} fill="#CCC" fontFamily="sans-serif">{v}</text>
+>>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
             </g>
           );
         })}
+<<<<<<< HEAD
         {/* Area fill */}
         <polygon points={areaPoints} fill="url(#wg)" />
         {/* Line */}
@@ -579,8 +672,54 @@ function WeightChart({ entries }) {
               {e.date.slice(5)}
             </text>
           );
+=======
+
+        {/* Goal dashed line */}
+        <polyline points={goalLinePoints} fill="none" stroke="#C8842A" strokeWidth={1.5} strokeDasharray="5,4" strokeLinejoin="round" opacity={0.7} />
+        <text x={xByDate("2025-10-01")-2} y={yByWeight(GOAL_WEIGHT)-6} textAnchor="end" fontSize={8} fill="#C8842A" fontFamily="sans-serif">goal</text>
+
+        {/* Today vertical line */}
+        <line x1={todayX} y1={PAD.t} x2={todayX} y2={H-PAD.b} stroke="#DDD" strokeWidth={1} strokeDasharray="3,3" />
+        <text x={todayX} y={H-PAD.b+14} textAnchor="middle" fontSize={7} fill="#BBB" fontFamily="sans-serif">today</text>
+
+        {/* Actual weight area + line */}
+        {entries.length >= 2 && (() => {
+          const pts = entries.map(e => `${xByDate(e.date)},${yByWeight(e.weight_kg)}`).join(" ")
+          const area = `${xByDate(entries[0].date)},${H-PAD.b} ${pts} ${xByDate(entries[entries.length-1].date)},${H-PAD.b}`
+          return (
+            <>
+              <polygon points={area} fill="url(#wg)" />
+              <polyline points={pts} fill="none" stroke="#3D7A52" strokeWidth={2.5} strokeLinejoin="round" />
+            </>
+          )
+        })()}
+
+        {/* Dots */}
+        {entries.map((e, i) => (
+          <circle key={i} cx={xByDate(e.date)} cy={yByWeight(e.weight_kg)} r={3.5} fill="#3D7A52" />
+        ))}
+
+        {/* Month labels on x axis */}
+        {["Mar","Apr","May","Jun","Jul","Aug","Sep","Oct"].map((m, i) => {
+          const dateStr = `2025-${String(i+3).padStart(2,"0")}-01`
+          if (i+3 > 10) return null
+          const x = xByDate(dateStr)
+          return <text key={m} x={x} y={H-PAD.b+22} textAnchor="middle" fontSize={7} fill="#CCC" fontFamily="sans-serif">{m}</text>
+>>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
         })}
       </svg>
+
+      {/* Legend */}
+      <div style={{ display:"flex", gap:14, marginTop:6, fontFamily:"sans-serif", fontSize:10, color:"#999" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+          <svg width={20} height={8}><line x1={0} y1={4} x2={20} y2={4} stroke="#3D7A52" strokeWidth={2.5}/></svg>
+          Actual
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+          <svg width={20} height={8}><line x1={0} y1={4} x2={20} y2={4} stroke="#C8842A" strokeWidth={1.5} strokeDasharray="4,3"/></svg>
+          Target (57 kg by Oct)
+        </div>
+      </div>
     </div>
   );
 }
@@ -1685,6 +1824,7 @@ export default function App() {
                 Today's Workout
               </div>
               {dayEx && (
+<<<<<<< HEAD
                 <div
                   style={{
                     background: exMeta.bg,
@@ -1759,6 +1899,15 @@ export default function App() {
                         >
                           ● {dayEx.intensity}
                         </span>
+=======
+                <div style={{ background:exMeta.bg,border:`1.5px solid ${workoutDone?"#3D7A52":"#E8E8E8"}`,borderRadius:12,padding:14,position:"relative" }}>
+                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10 }}>
+                    <div style={{ flex:1, cursor:"pointer" }} onClick={()=>setSwap({ open:true, mode:"exercise", type:"cardio" })}>
+                      <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:4,flexWrap:"wrap" }}>
+                        <span style={{ fontSize:9,fontFamily:"sans-serif",letterSpacing:"1.5px",textTransform:"uppercase",color:exMeta.accent,fontWeight:700 }}>{exMeta.emoji} {exMeta.label}</span>
+                        {dayEx.homeOk && <span style={{ fontSize:8,background:"#4A8C5C",color:"#fff",padding:"1px 5px",borderRadius:4,fontFamily:"sans-serif",fontWeight:700 }}>🏠 Home OK</span>}
+                        <span style={{ fontSize:8,fontFamily:"sans-serif",fontWeight:700,color:INTENSITY_COLOR[dayEx.intensity],textTransform:"capitalize" }}>● {dayEx.intensity}</span>
+>>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
                       </div>
                       <div
                         style={{
@@ -2041,6 +2190,13 @@ export default function App() {
         />
       )}
 
+      {/* SHOPPING / MEAL PREP VIEW */}
+      {view === "shopping" && (
+        <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+          <ShoppingList mealPlan={mealPlan} />
+        </div>
+      )}
+
       {/* LIBRARY VIEWS */}
       {(view === "meals" || view === "workouts") && (
         <div
@@ -2065,6 +2221,7 @@ export default function App() {
         }}
       >
         {[
+<<<<<<< HEAD
           { id: "plan", emoji: "📅", label: "Plan" },
           { id: "progress", emoji: "📈", label: "Progress" },
           { id: "meals", emoji: "🥗", label: "Meals" },
@@ -2088,6 +2245,16 @@ export default function App() {
             }}
           >
             <div style={{ fontSize: 17, marginBottom: 2 }}>{tab.emoji}</div>
+=======
+          { id:"plan",     emoji:"📅", label:"Plan"      },
+          { id:"progress", emoji:"📈", label:"Progress"  },
+          { id:"shopping", emoji:"🛒", label:"Shopping"  },
+          { id:"meals",    emoji:"🥗", label:"Meals"     },
+          { id:"workouts", emoji:"🏋️", label:"Workouts"  },
+        ].map(tab => (
+          <button key={tab.id} onClick={()=>setView(tab.id)} style={{ flex:1,padding:"11px 4px 10px",border:"none",background:"transparent",color:view===tab.id?"#1E3214":"#BBBBBB",fontFamily:"sans-serif",fontSize:10,fontWeight:view===tab.id?700:400,cursor:"pointer",borderTop:view===tab.id?"2px solid #1E3214":"2px solid transparent" }}>
+            <div style={{ fontSize:17,marginBottom:2 }}>{tab.emoji}</div>
+>>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
             {tab.label}
           </button>
         ))}
