@@ -1,30 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase, ensureAuth } from "./supabaseClient";
 import {
-<<<<<<< HEAD
-  MEAL_LIBRARY,
-  EXERCISE_LIBRARY,
-  DEFAULT_MEAL_PLAN,
-  DEFAULT_EXERCISE_PLAN,
-  MEAL_META,
-  EX_META,
-  INTENSITY_COLOR,
-  MEAL_TYPES,
-  EX_TYPES,
-  WEEK_THEMES,
-  DAY_LABELS,
-  getMeal,
-  getExercise,
-  timeLbl,
-  durLbl,
-} from "./data";
-=======
   MEAL_LIBRARY, EXERCISE_LIBRARY, DEFAULT_MEAL_PLAN, DEFAULT_EXERCISE_PLAN,
   MEAL_META, EX_META, INTENSITY_COLOR, MEAL_TYPES, EX_TYPES,
   WEEK_THEMES, DAY_LABELS, getMeal, getExercise, timeLbl, durLbl
 } from "./data"
 import { ShoppingList } from "./ShoppingList"
->>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
 
 // ─── VAPID PUBLIC KEY (replace after running: npx web-push generate-vapid-keys) ──
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "";
@@ -462,72 +443,6 @@ function targetWeightOnDate(dateStr) {
 }
 
 function WeightChart({ entries }) {
-<<<<<<< HEAD
-  if (entries.length < 2)
-    return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "20px 0",
-          color: "#BBB",
-          fontFamily: "sans-serif",
-          fontSize: 12,
-        }}
-      >
-        Log at least 2 entries to see your chart
-      </div>
-    );
-  const W = 320,
-    H = 120,
-    PAD = { t: 10, r: 10, b: 30, l: 36 };
-  const vals = entries.map((e) => e.weight_kg);
-  const min = Math.min(...vals) - 1;
-  const max = Math.max(...vals) + 1;
-  const xScale = (i) =>
-    PAD.l + (i / (entries.length - 1)) * (W - PAD.l - PAD.r);
-  const yScale = (v) =>
-    PAD.t + (1 - (v - min) / (max - min)) * (H - PAD.t - PAD.b);
-  const points = entries
-    .map((e, i) => `${xScale(i)},${yScale(e.weight_kg)}`)
-    .join(" ");
-  const areaPoints = `${xScale(0)},${H - PAD.b} ${points} ${xScale(entries.length - 1)},${H - PAD.b}`;
-  const start = vals[0],
-    current = vals[vals.length - 1],
-    diff = (current - start).toFixed(1);
-
-  return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 8,
-          fontFamily: "sans-serif",
-        }}
-      >
-        <div style={{ fontSize: 11, color: "#999" }}>
-          Start: <strong style={{ color: "#333" }}>{start} kg</strong>
-        </div>
-        <div
-          style={{
-            fontSize: 13,
-            fontWeight: 700,
-            color: diff < 0 ? "#3D7A52" : "#C0392B",
-          }}
-        >
-          {diff > 0 ? "+" : ""}
-          {diff} kg
-        </div>
-        <div style={{ fontSize: 11, color: "#999" }}>
-          Now: <strong style={{ color: "#333" }}>{current} kg</strong>
-        </div>
-      </div>
-      <svg
-        width="100%"
-        viewBox={`0 0 ${W} ${H}`}
-        style={{ overflow: "visible" }}
-      >
-=======
   const W = 320, H = 140, PAD = { t:10, r:14, b:30, l:36 }
 
   // Build goal line points: start → today → goal date
@@ -585,7 +500,6 @@ function WeightChart({ entries }) {
       )}
 
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow:"visible" }}>
->>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
         <defs>
           <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#3D7A52" stopOpacity="0.25" />
@@ -594,31 +508,6 @@ function WeightChart({ entries }) {
         </defs>
 
         {/* Grid lines */}
-<<<<<<< HEAD
-        {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-          const y = PAD.t + t * (H - PAD.t - PAD.b);
-          const v = (max - t * (max - min)).toFixed(1);
-          return (
-            <g key={t}>
-              <line
-                x1={PAD.l}
-                y1={y}
-                x2={W - PAD.r}
-                y2={y}
-                stroke="#EBEBEB"
-                strokeWidth={1}
-              />
-              <text
-                x={PAD.l - 4}
-                y={y + 4}
-                textAnchor="end"
-                fontSize={8}
-                fill="#BBB"
-                fontFamily="sans-serif"
-              >
-                {v}
-              </text>
-=======
         {[0,.25,.5,.75,1].map(t => {
           const y = PAD.t + t*(H-PAD.t-PAD.b)
           const v = (maxW - t*(maxW-minW)).toFixed(0)
@@ -626,53 +515,9 @@ function WeightChart({ entries }) {
             <g key={t}>
               <line x1={PAD.l} y1={y} x2={W-PAD.r} y2={y} stroke="#EBEBEB" strokeWidth={1} />
               <text x={PAD.l-4} y={y+4} textAnchor="end" fontSize={8} fill="#CCC" fontFamily="sans-serif">{v}</text>
->>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
             </g>
           );
         })}
-<<<<<<< HEAD
-        {/* Area fill */}
-        <polygon points={areaPoints} fill="url(#wg)" />
-        {/* Line */}
-        <polyline
-          points={points}
-          fill="none"
-          stroke="#3D7A52"
-          strokeWidth={2}
-          strokeLinejoin="round"
-        />
-        {/* Dots */}
-        {entries.map((e, i) => (
-          <circle
-            key={i}
-            cx={xScale(i)}
-            cy={yScale(e.weight_kg)}
-            r={3}
-            fill="#3D7A52"
-          />
-        ))}
-        {/* X labels (every Nth) */}
-        {entries.map((e, i) => {
-          if (
-            entries.length > 10 &&
-            i % Math.floor(entries.length / 5) !== 0 &&
-            i !== entries.length - 1
-          )
-            return null;
-          return (
-            <text
-              key={i}
-              x={xScale(i)}
-              y={H - PAD.b + 16}
-              textAnchor="middle"
-              fontSize={7}
-              fill="#BBB"
-              fontFamily="sans-serif"
-            >
-              {e.date.slice(5)}
-            </text>
-          );
-=======
 
         {/* Goal dashed line */}
         <polyline points={goalLinePoints} fill="none" stroke="#C8842A" strokeWidth={1.5} strokeDasharray="5,4" strokeLinejoin="round" opacity={0.7} />
@@ -705,7 +550,6 @@ function WeightChart({ entries }) {
           if (i+3 > 10) return null
           const x = xByDate(dateStr)
           return <text key={m} x={x} y={H-PAD.b+22} textAnchor="middle" fontSize={7} fill="#CCC" fontFamily="sans-serif">{m}</text>
->>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
         })}
       </svg>
 
@@ -1824,82 +1668,6 @@ export default function App() {
                 Today's Workout
               </div>
               {dayEx && (
-<<<<<<< HEAD
-                <div
-                  style={{
-                    background: exMeta.bg,
-                    border: `1.5px solid ${workoutDone ? "#3D7A52" : "#E8E8E8"}`,
-                    borderRadius: 12,
-                    padding: 14,
-                    position: "relative",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: 10,
-                    }}
-                  >
-                    <div
-                      style={{ flex: 1, cursor: "pointer" }}
-                      onClick={() =>
-                        setSwap({
-                          open: true,
-                          mode: "exercise",
-                          type: "cardio",
-                        })
-                      }
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          marginBottom: 4,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontFamily: "sans-serif",
-                            letterSpacing: "1.5px",
-                            textTransform: "uppercase",
-                            color: exMeta.accent,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {exMeta.emoji} {exMeta.label}
-                        </span>
-                        {dayEx.homeOk && (
-                          <span
-                            style={{
-                              fontSize: 8,
-                              background: "#4A8C5C",
-                              color: "#fff",
-                              padding: "1px 5px",
-                              borderRadius: 4,
-                              fontFamily: "sans-serif",
-                              fontWeight: 700,
-                            }}
-                          >
-                            🏠 Home OK
-                          </span>
-                        )}
-                        <span
-                          style={{
-                            fontSize: 8,
-                            fontFamily: "sans-serif",
-                            fontWeight: 700,
-                            color: INTENSITY_COLOR[dayEx.intensity],
-                            textTransform: "capitalize",
-                          }}
-                        >
-                          ● {dayEx.intensity}
-                        </span>
-=======
                 <div style={{ background:exMeta.bg,border:`1.5px solid ${workoutDone?"#3D7A52":"#E8E8E8"}`,borderRadius:12,padding:14,position:"relative" }}>
                   <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10 }}>
                     <div style={{ flex:1, cursor:"pointer" }} onClick={()=>setSwap({ open:true, mode:"exercise", type:"cardio" })}>
@@ -1907,7 +1675,6 @@ export default function App() {
                         <span style={{ fontSize:9,fontFamily:"sans-serif",letterSpacing:"1.5px",textTransform:"uppercase",color:exMeta.accent,fontWeight:700 }}>{exMeta.emoji} {exMeta.label}</span>
                         {dayEx.homeOk && <span style={{ fontSize:8,background:"#4A8C5C",color:"#fff",padding:"1px 5px",borderRadius:4,fontFamily:"sans-serif",fontWeight:700 }}>🏠 Home OK</span>}
                         <span style={{ fontSize:8,fontFamily:"sans-serif",fontWeight:700,color:INTENSITY_COLOR[dayEx.intensity],textTransform:"capitalize" }}>● {dayEx.intensity}</span>
->>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
                       </div>
                       <div
                         style={{
@@ -2221,31 +1988,6 @@ export default function App() {
         }}
       >
         {[
-<<<<<<< HEAD
-          { id: "plan", emoji: "📅", label: "Plan" },
-          { id: "progress", emoji: "📈", label: "Progress" },
-          { id: "meals", emoji: "🥗", label: "Meals" },
-          { id: "workouts", emoji: "🏋️", label: "Workouts" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setView(tab.id)}
-            style={{
-              flex: 1,
-              padding: "11px 4px 10px",
-              border: "none",
-              background: "transparent",
-              color: view === tab.id ? "#1E3214" : "#BBBBBB",
-              fontFamily: "sans-serif",
-              fontSize: 10,
-              fontWeight: view === tab.id ? 700 : 400,
-              cursor: "pointer",
-              borderTop:
-                view === tab.id ? "2px solid #1E3214" : "2px solid transparent",
-            }}
-          >
-            <div style={{ fontSize: 17, marginBottom: 2 }}>{tab.emoji}</div>
-=======
           { id:"plan",     emoji:"📅", label:"Plan"      },
           { id:"progress", emoji:"📈", label:"Progress"  },
           { id:"shopping", emoji:"🛒", label:"Shopping"  },
@@ -2254,7 +1996,6 @@ export default function App() {
         ].map(tab => (
           <button key={tab.id} onClick={()=>setView(tab.id)} style={{ flex:1,padding:"11px 4px 10px",border:"none",background:"transparent",color:view===tab.id?"#1E3214":"#BBBBBB",fontFamily:"sans-serif",fontSize:10,fontWeight:view===tab.id?700:400,cursor:"pointer",borderTop:view===tab.id?"2px solid #1E3214":"2px solid transparent" }}>
             <div style={{ fontSize:17,marginBottom:2 }}>{tab.emoji}</div>
->>>>>>> 75ea293 (Add shopping list, meal prep, weight goal line)
             {tab.label}
           </button>
         ))}
